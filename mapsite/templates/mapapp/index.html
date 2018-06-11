@@ -1,0 +1,127 @@
+{% extends 'mapapp/base.html' %}
+
+{% block head_block %}
+	<style>
+       /* Set the size of the div element that contains the map */
+      #map {
+        height: 800px;  /* The height is 400 pixels */
+        width: 100%;  /* The width is the width of the web page */
+       }
+    </style>
+
+    <script src="http://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyDR806VVzsuK-0Ri3rzjuBPkrHFd2Ujut0"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+
+{% endblock %}
+
+
+{% block body_block %}
+
+	<div class = "container">
+			<div >
+				{% for rest in places %}
+					{{ rest }},
+				{% endfor %}
+			</div>
+
+			<div id="map">Map</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+
+	function initializeMap() {
+
+	var arr = {{ places|safe }};
+	var mapOptions = {
+
+        disableDefaultUI: false,
+        zoom: 12,
+        center: {lat: 12.9716, lng: 77.5946}
+
+      };
+
+    map = new google.maps.Map(document.querySelector('#map'), mapOptions);
+
+    function locationFinder() {
+
+    	var locations = arr;
+        //locations.push("Koramangala Social");
+        //locations.push("Big Brewsky");
+        return locations;
+      }
+
+      /*
+      createMapMarker(placeData) reads Google Places search results to create map pins.
+      placeData is the object returned from search results containing information
+      about a single location.
+      */
+      function createMapMarker(placeData) {
+
+        // The next lines save location data from the search result object to local variables
+
+        var lat = placeData.geometry.location.lat();  // latitude from the place service
+        var lon = placeData.geometry.location.lng();  // longitude from the place service
+        var address = placeData.formatted_address;   // name of the place from the place service
+		var name = placeData.name
+        var bounds = window.mapBounds;            // current boundaries of the map window
+
+
+        // marker is an object with additional data about the pin for a single location
+
+        var marker = new google.maps.Marker({
+          map: map,
+       	  position: placeData.geometry.location,
+          title: name
+        });
+
+      }
+
+      /*
+      callback(results, status) makes sure the search returned results for a location.
+      If so, it creates a new map marker for that location.
+      */
+      function callback(results, status) {
+        if (status == google.maps.places.PlacesServiceStatus.OK) {
+        createMapMarker(results[0]);
+        }
+      }
+
+      /*
+      pinPoster(locations) takes in the array of locations created by locationFinder()
+      and fires off Google place searches for each location
+      */
+      function pinPoster(locations) {
+      	// creates a Google place search service object. PlacesService does the work of
+        // actually searching for location data.
+        var service = new google.maps.places.PlacesService(map);
+
+        // Iterates through the array of locations, creates a search object for each location
+        locations.forEach(function(place){
+        // the search request object
+        var request = {
+            query: place
+        };
+
+        // Actually searches the Google Maps API for location data and runs the callback
+        // function with the search results after each search.
+        service.textSearch(request, callback);
+        });
+      }
+
+
+      // Sets the boundaries of the map based on pin locations
+      // window.mapBounds = new google.maps.LatLngBounds(); -----
+      // locations is an array of location strings returned from locationFinder()
+      locations = locationFinder();
+	  // pinPoster(locations) creates pins on the map for each location in
+      // the locations array
+      pinPoster(locations);
+    }
+
+    $( document ).ready(function(){
+ 		initializeMap();
+		});
+	</script>
+
+
+{% endblock %}
